@@ -5,6 +5,7 @@
 html, body {
 	height: 100%;
     overflow: hidden;
+	font-family: "HelveticaNeue-Bold", "Helvetica Neue Bold", Arial, sans-serif;
 }
 
 .board {
@@ -14,9 +15,8 @@ html, body {
 }
 
 .list-row {
-	font-family: sans-serif;
 	font-size: 36px;
-	padding: 5px;
+	padding: 2%;
 	
 	display: flex;
 	flex: 1;
@@ -26,8 +26,47 @@ html, body {
 	border: 1px solid black;
 }
 .service-name {
-	color: blue
+	color: black;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
 }
 .times {
 	color: red
+}
+
+.metro-bullet {
+    width: 10cqh;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    font-size: 5.5cqh;
+    font-weight: bold;
+    margin-right: 2cqh;
+    display: flex;
+    align-items: center;
+	justify-content: center;
+}
+.red {
+  background: #BF0D3E;
+  color: white;
+}
+.orange {
+  background: #ED8B00;
+  color: black;
+}
+.yellow {
+  background: #FFD100;
+  color: black;
+}
+.green {
+  background: #00B140;
+  color: white;
+}
+.blue {
+  background: #009CDE;
+  color: white;
+}
+.silver {
+  background: #919D9D;
+  color: black;
 }
