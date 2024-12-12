@@ -6,6 +6,7 @@ html, body {
 	height: 100%;
     overflow: hidden;
 	font-family: "HelveticaNeue-Bold", "Helvetica Neue Bold", Arial, sans-serif;
+	background: #2c3647
 }
 
 .board {
@@ -16,6 +17,7 @@ html, body {
 
 .list-row {
 	font-size: 36px;
+	color: white;
 	padding: 2%;
 	
 	display: flex;
@@ -23,10 +25,11 @@ html, body {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	border: 1px solid black;
+	border-top: 1px solid white;
+	border-bottom: 1px solid white;
 }
 .service-name {
-	color: black;
+	color: white;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
