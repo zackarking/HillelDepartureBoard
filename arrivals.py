@@ -30,9 +30,8 @@ def parse_marc(folder_path):
                     marc_info[file.stem][list(row.values())[0]] = row
     return marc_info
 
-def main(args):
-    marc_info = parse_marc(args.marc_gtfs) 
-
+def get_marc(path):
+    marc_info = parse_marc(path) 
     feed = gtfs_realtime_pb2.FeedMessage()
     response = requests.get('https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC+RT/marc-tu.pb')
     feed.ParseFromString(response.content)
@@ -53,10 +52,34 @@ def main(args):
                         arr_time = datetime.fromtimestamp(ts)
                         print(f"Arriving {arr_time} at {marc_info['stops'][stu.stop_id]['stop_name']}")
 
+def get_metro(code):
+    key = 'e13626d03d8e4c03ac07f95541b3091b'
+    url = f'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/{code}?api_key={key}'
+    resp = requests.get(url)
+    data = resp.json()
+    filtered = []
+    for entry in data["Trains"]:
+        if entry['DestinationName'] != 'No Passenger' and entry['Min'] not in ['ARR', 'BRD', 'DLY']:
+            filtered.append(entry)
+    by_dest = {}
+    for entry in filtered:
+        if entry['DestinationName'] in by_dest:
+            by_dest[entry['DestinationName']].append(entry['Min'])           
+        else:
+            by_dest[entry['DestinationName']] = [entry['Min']]
+    print(by_dest)
+
+def main(args):
+    if args.marc_gtfs is not None:
+        get_marc(args.marc_gtfs)
+    if args.metro_code is not None:
+        get_metro(args.metro_code)
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--marc_gtfs', type=str, required=True, help="Path MARC static GFTS")
+    parser.add_argument('--marc_gtfs', type=str, default=None, help="Path to MARC static GFTS")
+    parser.add_argument('--metro_code', type=str, default=None, help="Metro station code (CP is E09)")
     args = parser.parse_args()
     main(args)
     
