@@ -6,9 +6,12 @@ Currently just displays all MARC trains running at the time. Run as follows:
 ```
 
 Notes for next steps:
-- Find which browsers work well with the Pi
-- Find library (selenium?) for python to open a page in the browser,
+- [x] Metro API
+- [ ] Parse MARC schedule and combine with MARC realtime
+- [ ] Python write to HTML
+- [ ] Find library (selenium?) for python to open a page in the browser,
 make it fullscreen, and refresh the page
-- Get API for Metro
-- Script to git pull update
-- Script to turn off screen at night
+- [ ] Script to git pull update
+- [ ] Script to check for updates to MARC GTFS schedule and pull new files
+- [ ] Script to turn off screen at night
+- [ ] Find which browsers work well with the Pi

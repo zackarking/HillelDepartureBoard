@@ -9,7 +9,24 @@ import csv
 import time
 
 """
-stop_times.txt shows scheduled dep/arr times for all train numbers
+static GTFS:
+routes.txt - maps route_id to the 3 route names
+stops.txt - maps stop_id to station name
+trips.txt - maps trip_id to route_id, service_id, and trip name
+stop_times.txt - maps trip_id to arrival and departure times per stop_id
+calendar.txt - maps service_id to active days of week and start-end dates
+calendar_dates.txt - maps service_id to dates where it is added or removed
+
+Parsing steps to get scheduled trip:
+1. Parse stop_times into a map from desired stop_id to arrival time and trip_id
+2. Lookup in trips.txt to add service_id to map value
+
+Upon screen update:
+1. Make copy of master schedule
+2. Filter to arrival times in the next 99 mins
+3. Filter to service_ids that are active on that day or are added for that day
+4. Remove entries that realtime has cancelled
+
 """
 
 college_park_nb_id = 12018
@@ -18,6 +35,11 @@ new_carrollton_nb_id = 11989
 new_carrollton_sb_id = 11988
 
 schedule_relationship = ['scheduled', 'added', 'unscheduled', 'canceled', 'null', 'replacement', 'duplicated', 'deleted']
+
+def parse_marc_schedule(folder_path):
+    north_stop_id = college_park_nb_id
+    south_stop_id = college_park_sb_id
+    master = {north_stop_id: {}, south_stop_id: {}}
 
 def parse_marc(folder_path):
     marc_info = {}
@@ -42,8 +64,7 @@ def get_marc(path):
             trip_dict = marc_info['trips'][trip_desc.trip_id]
             route_dict = marc_info['routes'][trip_desc.route_id]
             sched_relation = schedule_relationship[trip_desc.schedule_relationship]
-            dest = list(trip_update.stop_time_update)[-1]
-            print(f"Trip update for {sched_relation} {route_dict['route_long_name'].split()[0]} line {trip_dict['trip_short_name']} to {marc_info['stops'][dest.stop_id]['stop_name']}:")
+            print(f"Trip update for {sched_relation} {route_dict['route_long_name'].split()[0]} line {trip_dict['trip_short_name']} to {trip_dict['trip_headsign']}:")
             curr_time = time.time()
             for stu in trip_update.stop_time_update:
                 if stu.HasField('arrival'):
