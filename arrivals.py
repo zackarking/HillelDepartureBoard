@@ -33,6 +33,9 @@ college_park_nb_id = 12018
 college_park_sb_id = 12015
 new_carrollton_nb_id = 11989
 new_carrollton_sb_id = 11988
+penn_nd_id = 12002
+penn_sb_id = 11980
+marc_name_map = {11958: "Washington", 12006: "Baltimore", 12008: "Dorsey"}
 
 schedule_relationship = ['scheduled', 'added', 'unscheduled', 'canceled', 'null', 'replacement', 'duplicated', 'deleted']
 
@@ -52,11 +55,13 @@ def parse_marc(folder_path):
                     marc_info[file.stem][list(row.values())[0]] = row
     return marc_info
 
-def get_marc(path):
-    marc_info = parse_marc(path) 
+def get_marc(marc_code):
+    station_pair = marc_code.split('-')
+    marc_info = parse_marc('./mdotmta_gtfs_marc') 
     feed = gtfs_realtime_pb2.FeedMessage()
     response = requests.get('https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC+RT/marc-tu.pb')
     feed.ParseFromString(response.content)
+    by_dest = {}
     for entity in feed.entity:
         if entity.HasField('trip_update'):
             trip_update = entity.trip_update
@@ -64,14 +69,29 @@ def get_marc(path):
             trip_dict = marc_info['trips'][trip_desc.trip_id]
             route_dict = marc_info['routes'][trip_desc.route_id]
             sched_relation = schedule_relationship[trip_desc.schedule_relationship]
+
+            
             print(f"Trip update for {sched_relation} {route_dict['route_long_name'].split()[0]} line {trip_dict['trip_short_name']} to {trip_dict['trip_headsign']}:")
             curr_time = time.time()
+            dest_id = int(list(trip_update.stop_time_update)[-1].stop_id)
             for stu in trip_update.stop_time_update:
                 if stu.HasField('arrival'):
                     ts = stu.arrival.time
                     if ts > curr_time:
                         arr_time = datetime.fromtimestamp(ts)
                         print(f"Arriving {arr_time} at {marc_info['stops'][stu.stop_id]['stop_name']}")
+                        if stu.stop_id in station_pair:
+                            val = int((ts - curr_time) / 60)
+                            key = trip_dict['trip_headsign'] if dest_id not in marc_name_map else marc_name_map[dest_id]
+                            if key in by_dest:
+                                by_dest[key].append(val)
+                            else:
+                                by_dest[key] = [val]
+
+    rows = []
+    for key, val in by_dest.items():
+        rows.append(f'<div class="service-name">{key}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+    write_rows(rows)
 
 def get_metro(code):
     key = 'e13626d03d8e4c03ac07f95541b3091b'
@@ -104,15 +124,15 @@ def write_rows(rows):
         outfile.write(template)
 
 def main(args):
-    if args.marc_gtfs is not None:
-        get_marc(args.marc_gtfs)
-    if args.metro_code is not None:
+    if args.marc_code is not None:
+        get_marc(args.marc_code)
+    elif args.metro_code is not None:
         get_metro(args.metro_code)
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--marc_gtfs', type=str, default=None, help="Path to MARC static GFTS")
+    parser.add_argument('--marc_code', type=str, default=None, help="MARC station code pair, e.g. 11989-11988")
     parser.add_argument('--metro_code', type=str, default=None, help="Metro station code (CP is E09)")
     args = parser.parse_args()
     main(args)
