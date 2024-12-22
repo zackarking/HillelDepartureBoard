@@ -84,11 +84,24 @@ def get_metro(code):
             filtered.append(entry)
     by_dest = {}
     for entry in filtered:
-        if entry['DestinationName'] in by_dest:
-            by_dest[entry['DestinationName']].append(entry['Min'])           
+        key = (entry['DestinationName'], entry['Line'])
+        if key in by_dest:
+            by_dest[key].append(int(entry['Min']))          
         else:
-            by_dest[entry['DestinationName']] = [entry['Min']]
-    print(by_dest)
+            by_dest[key] = [int(entry['Min'])]
+
+    rows = []
+    for key, val in by_dest.items():
+        rows.append(f'<div class="service-name"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+    write_rows(rows)
+
+def write_rows(rows):
+    with open('template.html', 'r') as infile:
+        template = infile.read()
+    for i, row in enumerate(rows):
+        template = template.replace(f'Row {i}', row)
+    with open('DepartureBoard.html', 'w') as outfile:
+        outfile.write(template)
 
 def main(args):
     if args.marc_gtfs is not None:

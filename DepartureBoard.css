@@ -4,7 +4,7 @@
 
 html, body {
 	height: 100%;
-    overflow: hidden;
+  overflow: hidden;
 	font-family: "HelveticaNeue-Bold", "Helvetica Neue Bold", Arial, sans-serif;
 	background: #2c3647
 }
@@ -35,7 +35,7 @@ html, body {
 	align-items: center;
 }
 .times {
-	color: red
+	color: white
 }
 
 .metro-bullet {
@@ -49,27 +49,27 @@ html, body {
     align-items: center;
 	justify-content: center;
 }
-.red {
+.RD {
   background: #BF0D3E;
   color: white;
 }
-.orange {
+.OR {
   background: #ED8B00;
   color: black;
 }
-.yellow {
+.YL {
   background: #FFD100;
   color: black;
 }
-.green {
+.GR {
   background: #00B140;
   color: white;
 }
-.blue {
+.BL {
   background: #009CDE;
   color: white;
 }
-.silver {
+.SV {
   background: #919D9D;
   color: black;
 }
