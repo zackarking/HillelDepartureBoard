@@ -55,7 +55,7 @@ def parse_marc(folder_path):
                     marc_info[file.stem][list(row.values())[0]] = row
     return marc_info
 
-def get_marc(marc_code):
+def get_marc(marc_code, rows):
     station_pair = marc_code.split('-')
     marc_info = parse_marc('./mdotmta_gtfs_marc') 
     feed = gtfs_realtime_pb2.FeedMessage()
@@ -88,19 +88,23 @@ def get_marc(marc_code):
                             else:
                                 by_dest[key] = [val]
 
-    rows = []
+    allocated_rows = 2
     for key, val in by_dest.items():
-        rows.append(f'<div class="service-name">{key}</div><div class="times">{str(val[:2])[1:-1]}</div>')
-    write_rows(rows)
+        if allocated_rows <= 0:
+            break
+        rows.append(f'<div class="service-name"><img src="images/MARC_train.svg.png" class="marc-logo">{key}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+        allocated_rows -= 1
+    for _ in range(allocated_rows, 0, -1):
+        rows.append(f'<div class="service-name"><img src="images/MARC_train.svg.png" class="marc-logo"></div>')
 
-def get_metro(code):
+def get_metro(code, rows):
     key = 'e13626d03d8e4c03ac07f95541b3091b'
     url = f'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/{code}?api_key={key}'
     resp = requests.get(url)
     data = resp.json()
     filtered = []
     for entry in data["Trains"]:
-        if entry['DestinationName'] != 'No Passenger' and entry['Min'] not in ['ARR', 'BRD', 'DLY']:
+        if entry['DestinationName'] not in ['No Passenger', 'Train'] and entry['Min'] not in ['ARR', 'BRD', 'DLY']:
             filtered.append(entry)
     by_dest = {}
     for entry in filtered:
@@ -110,10 +114,18 @@ def get_metro(code):
         else:
             by_dest[key] = [int(entry['Min'])]
 
-    rows = []
+    allocated_rows = 2
     for key, val in by_dest.items():
-        rows.append(f'<div class="service-name"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
-    write_rows(rows)
+        if allocated_rows <= 0:
+            break
+        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg.png" class="metro-logo"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+        allocated_rows -= 1
+    for _ in range(allocated_rows, 0, -1):
+        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg.png" class="metro-logo"></div>')
+
+def add_purple_line(rows):
+    rows.append(f'<div class="service-name"><img src="images/MTA_Purple_Line_logo.svg.png" class="purple-line-logo">Coming 2027</div>')
+    rows.append(f'<div class="service-name"><img src="images/MTA_Purple_Line_logo.svg.png" class="purple-line-logo"></div>')
 
 def write_rows(rows):
     with open('template.html', 'r') as infile:
@@ -124,10 +136,13 @@ def write_rows(rows):
         outfile.write(template)
 
 def main(args):
+    rows = []
+    if args.metro_code is not None:
+        get_metro(args.metro_code, rows)
     if args.marc_code is not None:
-        get_marc(args.marc_code)
-    elif args.metro_code is not None:
-        get_metro(args.metro_code)
+        get_marc(args.marc_code, rows)
+    add_purple_line(rows)
+    write_rows(rows)
     
 
 if __name__ == "__main__":

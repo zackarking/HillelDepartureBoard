@@ -6,7 +6,8 @@ html, body {
 	height: 100%;
   overflow: hidden;
 	font-family: "HelveticaNeue-Bold", "Helvetica Neue Bold", Arial, sans-serif;
-	background: #2c3647
+	/* background: #2c3647 */
+  background: white;
 }
 
 .board {
@@ -17,36 +18,50 @@ html, body {
 
 .list-row {
 	font-size: 36px;
-	color: white;
-	padding: 2%;
+	/* color: white; */
+  color: black;
+	padding: 1.5%;
 	
 	display: flex;
 	flex: 1;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	border-top: 1px solid white;
-	border-bottom: 1px solid white;
+	/* border-top: 1px solid white;
+	border-bottom: 1px solid white; */
+  border-top: 1px solid black;
+	border-bottom: 1px solid black;
 }
 .service-name {
-	color: white;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 }
-.times {
-	color: white
+
+.marc-logo {
+  width: 25cqh;
+  margin-right: 3cqh;
+}
+
+.purple-line-logo {
+  width: 25cqh;
+  margin-right: 3cqh;
+}
+
+.metro-logo {
+  width: 10cqh;
+  margin-right: 4cqh;
 }
 
 .metro-bullet {
-    width: 10cqh;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    font-size: 5.5cqh;
-    font-weight: bold;
-    margin-right: 2cqh;
-    display: flex;
-    align-items: center;
+  width: 10cqh;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  font-size: 5.5cqh;
+  font-weight: bold;
+  margin-right: 4cqh;
+  display: flex;
+  align-items: center;
 	justify-content: center;
 }
 .RD {
