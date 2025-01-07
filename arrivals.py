@@ -3,6 +3,7 @@
 from google.transit import gtfs_realtime_pb2
 from pathlib import Path
 from datetime import datetime
+import webbrowser
 import requests
 import argparse
 import csv
@@ -43,6 +44,12 @@ def parse_marc_schedule(folder_path):
     north_stop_id = college_park_nb_id
     south_stop_id = college_park_sb_id
     master = {north_stop_id: {}, south_stop_id: {}}
+
+def get_marc_static_gtfs_last_modifed():
+    url = 'https://feeds.mta.maryland.gov/gtfs/marc'
+    resp = requests.head(url, allow_redirects=True)
+    last_modified = resp.headers['last-modified']
+    return datetime.strptime(last_modified, '%a, %d %b %Y %H:%M:%S %Z').timestamp()
 
 def parse_marc(folder_path):
     marc_info = {}
@@ -136,19 +143,27 @@ def write_rows(rows):
         outfile.write(template)
 
 def main(args):
-    rows = []
-    if args.metro_code is not None:
-        get_metro(args.metro_code, rows)
-    if args.marc_code is not None:
-        get_marc(args.marc_code, rows)
-    add_purple_line(rows)
-    write_rows(rows)
+    while(True):
+        rows = []
+        if args.metro_code is not None:
+            get_metro(args.metro_code, rows)
+        if args.marc_code is not None:
+            get_marc(args.marc_code, rows)
+        add_purple_line(rows)
+        write_rows(rows)
+        written_html = Path('DepartureBoard.html').absolute()
+        webbrowser.open(f"file://{written_html}", new=0, autoraise=False)
+        if args.refresh > 0:
+            time.sleep(args.refresh)
+        else:
+            break
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--marc_code', type=str, default=None, help="MARC station code pair, e.g. 11989-11988")
     parser.add_argument('--metro_code', type=str, default=None, help="Metro station code (CP is E09)")
+    parser.add_argument('--refresh', type=int, default=0, help="Seconds between page refresh, 0 is no refresh")
     args = parser.parse_args()
     main(args)
     
