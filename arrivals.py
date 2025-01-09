@@ -3,6 +3,9 @@
 from google.transit import gtfs_realtime_pb2
 from pathlib import Path
 from datetime import datetime
+from threading import Event
+import shutil
+import signal
 import webbrowser
 import requests
 import argparse
@@ -40,16 +43,27 @@ marc_name_map = {11958: "Washington", 12006: "Baltimore", 12008: "Dorsey"}
 
 schedule_relationship = ['scheduled', 'added', 'unscheduled', 'canceled', 'null', 'replacement', 'duplicated', 'deleted']
 
+exit_event = Event()
+def exit_handler(signal, frame):
+    exit_event.set()
+
 def parse_marc_schedule(folder_path):
     north_stop_id = college_park_nb_id
     south_stop_id = college_park_sb_id
     master = {north_stop_id: {}, south_stop_id: {}}
 
-def get_marc_static_gtfs_last_modifed():
-    url = 'https://feeds.mta.maryland.gov/gtfs/marc'
+def get_file_last_modifed(url):
     resp = requests.head(url, allow_redirects=True)
     last_modified = resp.headers['last-modified']
     return datetime.strptime(last_modified, '%a, %d %b %Y %H:%M:%S %Z').timestamp()
+
+def download_unpack_zip(url):
+    resp = requests.get(url, allow_redirects=True)
+    temp_path = Path("./temp.zip")
+    with open(temp_path, "wb") as out:
+        out.write(resp.content)
+    shutil.unpack_archive(temp_path, 'mdotmta_gtfs_marc')
+    temp_path.unlink()
 
 def parse_marc(folder_path):
     marc_info = {}
@@ -143,23 +157,36 @@ def write_rows(rows):
         outfile.write(template)
 
 def main(args):
-    while(True):
-        rows = []
-        if args.metro_code is not None:
-            get_metro(args.metro_code, rows)
-        if args.marc_code is not None:
-            get_marc(args.marc_code, rows)
-        add_purple_line(rows)
-        write_rows(rows)
-        written_html = Path('DepartureBoard.html').absolute()
-        webbrowser.open(f"file://{written_html}", new=0, autoraise=False)
-        if args.refresh > 0:
-            time.sleep(args.refresh)
-        else:
-            break
+    try:
+        marc_static_gtfs_url  = 'https://feeds.mta.maryland.gov/gtfs/marc'
+        marc_gtfs_modified = get_file_last_modifed(marc_static_gtfs_url)
+        if not Path('./mdotmta_gtfs_marc').exists() or Path('./mdotmta_gtfs_marc').stat().st_mtime < marc_gtfs_modified:
+            download_unpack_zip(marc_static_gtfs_url)
+    except:
+        pass
     
+    while not exit_event.is_set():
+        try:
+            rows = []
+            if args.metro_code is not None:
+                get_metro(args.metro_code, rows)
+            if args.marc_code is not None:
+                get_marc(args.marc_code, rows)
+            add_purple_line(rows)
+            write_rows(rows)
+            written_html = Path('DepartureBoard.html').absolute()
+            webbrowser.open(f"file://{written_html}", new=0, autoraise=False)
+            if args.refresh > 0:
+                exit_event.wait(args.refresh)
+            else:
+                return
+        except:
+            pass
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, exit_handler)
+    signal.signal(signal.SIGINT, exit_handler)
+    signal.signal(signal.SIGHUP, exit_handler)
     parser = argparse.ArgumentParser()
     parser.add_argument('--marc_code', type=str, default=None, help="MARC station code pair, e.g. 11989-11988")
     parser.add_argument('--metro_code', type=str, default=None, help="Metro station code (CP is E09)")

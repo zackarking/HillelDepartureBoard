@@ -13,6 +13,6 @@ Notes for next steps:
 - [ ] Find library (selenium?) for python to open a page in the browser, and refresh the page
 - [ ] Open webbrowser in fullscreen mode
 - [ ] Script to git pull update
-- [ ] Script to check for updates to MARC GTFS schedule and pull new files
+- [x] Script to check for updates to MARC GTFS schedule and pull new files
 - [ ] Script to turn off screen at night
 - [ ] Find which browsers work well with the Pi
