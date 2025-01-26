@@ -6,6 +6,7 @@ from datetime import datetime
 from threading import Event
 import shutil
 import signal
+import subprocess
 import webbrowser
 import requests
 import argparse
@@ -65,6 +66,12 @@ def download_unpack_zip(url):
     shutil.unpack_archive(temp_path, 'mdotmta_gtfs_marc')
     temp_path.unlink()
 
+def decrypt_metro_api():
+    subprocess.run(['openssl', 'enc', '-d', '-aes-256-cbc', '-in', 'metro_api.enc', '-out', 'metro_api.key', '-pass', 'file:file_key.key'])
+    with open('metro_api.key', 'r') as infile:
+        key = infile.readline().rstrip()
+    return key
+
 def parse_marc(folder_path):
     marc_info = {}
     for file in Path(folder_path).iterdir():
@@ -118,8 +125,7 @@ def get_marc(marc_code, rows):
     for _ in range(allocated_rows, 0, -1):
         rows.append(f'<div class="service-name"><img src="images/MARC_train.svg.png" class="marc-logo"></div>')
 
-def get_metro(code, rows):
-    key = 'e13626d03d8e4c03ac07f95541b3091b'
+def get_metro(code, rows, key):
     url = f'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/{code}?api_key={key}'
     resp = requests.get(url)
     data = resp.json()
@@ -162,6 +168,8 @@ def main(args):
         marc_gtfs_modified = get_file_last_modifed(marc_static_gtfs_url)
         if not Path('./mdotmta_gtfs_marc').exists() or Path('./mdotmta_gtfs_marc').stat().st_mtime < marc_gtfs_modified:
             download_unpack_zip(marc_static_gtfs_url)
+        
+        metro_key = decrypt_metro_api()
     except:
         pass
     
@@ -169,7 +177,7 @@ def main(args):
         try:
             rows = []
             if args.metro_code is not None:
-                get_metro(args.metro_code, rows)
+                get_metro(args.metro_code, rows, metro_key)
             if args.marc_code is not None:
                 get_marc(args.marc_code, rows)
             add_purple_line(rows)
