@@ -10,7 +10,7 @@ Notes for next steps:
 - [ ] Parse MARC schedule and combine with MARC realtime
 - [x] Python write to HTML
 - [ ] Python virtual environment
-- [ ] Find library (selenium?) for python to open a page in the browser, and refresh the page
+- [x] Find library (selenium?) for python to open a page in the browser, and refresh the page
 - [ ] Open webbrowser in fullscreen mode
 - [ ] Script to git pull update
 - [x] Script to check for updates to MARC GTFS schedule and pull new files

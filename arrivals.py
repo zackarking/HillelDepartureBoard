@@ -12,6 +12,7 @@ import requests
 import argparse
 import csv
 import time
+import bisect
 
 """
 static GTFS:
@@ -40,7 +41,7 @@ new_carrollton_nb_id = 11989
 new_carrollton_sb_id = 11988
 penn_nd_id = 12002
 penn_sb_id = 11980
-marc_name_map = {11958: "Washington", 12006: "Baltimore", 12008: "Dorsey"}
+marc_name_map = {11958: "Washington", 12006: "Baltimore Camden", 12008: "Dorsey", 12025: "Dorsey", 11980: "Baltimore Penn", 12002: "Baltimore Penn"}
 
 schedule_relationship = ['scheduled', 'added', 'unscheduled', 'canceled', 'null', 'replacement', 'duplicated', 'deleted']
 
@@ -105,25 +106,25 @@ def get_marc(marc_code, rows):
             for stu in trip_update.stop_time_update:
                 if stu.HasField('arrival'):
                     ts = stu.arrival.time
-                    if ts > curr_time:
+                    from_now = int((ts - curr_time) / 60)
+                    if ts > curr_time and from_now > 0:
                         arr_time = datetime.fromtimestamp(ts)
                         print(f"Arriving {arr_time} at {marc_info['stops'][stu.stop_id]['stop_name']}")
                         if stu.stop_id in station_pair:
-                            val = int((ts - curr_time) / 60)
-                            key = trip_dict['trip_headsign'] if dest_id not in marc_name_map else marc_name_map[dest_id]
+                            key = marc_name_map[dest_id] if dest_id in marc_name_map else trip_dict['trip_headsign']
                             if key in by_dest:
-                                by_dest[key].append(val)
+                                bisect.insort(by_dest[key], from_now)
                             else:
-                                by_dest[key] = [val]
+                                by_dest[key] = [from_now]
 
     allocated_rows = 2
     for key, val in by_dest.items():
         if allocated_rows <= 0:
             break
-        rows.append(f'<div class="service-name"><img src="images/MARC_train.svg.png" class="marc-logo">{key}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+        rows.append(f'<div class="service-name"><div class="image-backer"><img src="images/MARC_train.svg.png" class="marc-logo"></div>{key}</div><div class="times">{str(val[:2])[1:-1]}</div>')
         allocated_rows -= 1
     for _ in range(allocated_rows, 0, -1):
-        rows.append(f'<div class="service-name"><img src="images/MARC_train.svg.png" class="marc-logo"></div>')
+        rows.append(f'<div class="service-name"></div>')
 
 def get_metro(code, rows, key):
     url = f'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/{code}?api_key={key}'
@@ -137,7 +138,7 @@ def get_metro(code, rows, key):
     for entry in filtered:
         key = (entry['DestinationName'], entry['Line'])
         if key in by_dest:
-            by_dest[key].append(int(entry['Min']))          
+            bisect.insort(by_dest[key], int(entry['Min'])) 
         else:
             by_dest[key] = [int(entry['Min'])]
 
@@ -145,14 +146,14 @@ def get_metro(code, rows, key):
     for key, val in by_dest.items():
         if allocated_rows <= 0:
             break
-        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg.png" class="metro-logo"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg" class="metro-logo"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
         allocated_rows -= 1
     for _ in range(allocated_rows, 0, -1):
-        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg.png" class="metro-logo"></div>')
+        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg" class="metro-logo"></div>')
 
 def add_purple_line(rows):
-    rows.append(f'<div class="service-name"><img src="images/MTA_Purple_Line_logo.svg.png" class="purple-line-logo">Coming 2027</div>')
-    rows.append(f'<div class="service-name"><img src="images/MTA_Purple_Line_logo.svg.png" class="purple-line-logo"></div>')
+    rows.append(f'<div class="service-name"></div>')
+    rows.append(f'<div class="service-name"><div class="image-backer"><img src="images/MTA_Purple_Line_logo.svg.png" class="purple-line-logo"></div>Coming 2027</div>')
 
 def write_rows(rows):
     with open('template.html', 'r') as infile:
