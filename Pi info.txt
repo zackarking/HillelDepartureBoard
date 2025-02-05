@@ -1,0 +1,10 @@
+username: user
+password: 1234
+example: ssh user@raspberrypi
+
+browser: brave-browser (it is lightweight but still looking for something better) also it currently reloads DepartureBoard.html evey 30 seconds. can change off
+
+
+                        would like to find some html viewer that does not need to be an internet browser
+
+                        using lightweight desktop and terminalx or whatever
