@@ -68,7 +68,7 @@ def download_unpack_zip(url):
     temp_path.unlink()
 
 def decrypt_metro_api():
-    subprocess.run(['openssl', 'enc', '-d', '-aes-256-cbc', '-in', 'metro_api.enc', '-out', 'metro_api.key', '-pass', 'file:file_key.key'])
+    subprocess.run(['openssl', 'enc', '-aes-256-cbc', '-d', '-pbkdf2', '-in', 'metro_api.enc', '-out', 'metro_api.key', '-pass', 'file:file_key.key'])
     with open('metro_api.key', 'r') as infile:
         key = infile.readline().rstrip()
     return key
@@ -136,17 +136,18 @@ def get_metro(code, rows, key):
             filtered.append(entry)
     by_dest = {}
     for entry in filtered:
-        key = (entry['DestinationName'], entry['Line'])
+        key = entry['DestinationName']
         if key in by_dest:
-            bisect.insort(by_dest[key], int(entry['Min'])) 
+            bisect.insort_right(by_dest[key], (int(entry['Min']), entry['Line']), key=(lambda x: x[0]))
         else:
-            by_dest[key] = [int(entry['Min'])]
+            by_dest[key] = [(int(entry['Min']), entry['Line'])]
 
     allocated_rows = 2
     for key, val in by_dest.items():
         if allocated_rows <= 0:
             break
-        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg" class="metro-logo"><div class="metro-bullet {key[1]}">{key[1]}</div>{key[0]}</div><div class="times">{str(val[:2])[1:-1]}</div>')
+        times_str = [x[0] for x in val]
+        rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg" class="metro-logo"><div class="metro-bullet {val[0][1]}">{val[0][1]}</div>{key}</div><div class="times">{str(times_str[:2])[1:-1]}</div>')
         allocated_rows -= 1
     for _ in range(allocated_rows, 0, -1):
         rows.append(f'<div class="service-name"><img src="images/WMATA_Metro_logo.svg" class="metro-logo"></div>')
